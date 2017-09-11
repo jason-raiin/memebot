@@ -4,15 +4,18 @@ from django.forms import ModelForm
 
 class Song(models.Model):
     name = models.CharField(max_length = 100)
-    lyrics = models.CharField(max_length = 10000)
+    lyrics = models.TextField()
     lines = models.IntegerField(blank = True)
-
-    def __init__(self):
-        lyriclist = self.lyric_list()
-        self.lines = len(lyriclist)
 
     def __str__(self):
         return "%s" % (self.name)
+
+    @classmethod
+    def create(cls,name,lyrics):
+        song = cls(name,lyrics)
+        song.lines = len(song.lyric_list())
+        song.save()
+        return song
 
     def lyric_list(self):
         clean = [line for line in self.lyrics.splitlines() if line != ""]
