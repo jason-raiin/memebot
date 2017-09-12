@@ -5,15 +5,16 @@ from django.forms import ModelForm
 class Song(models.Model):
     name = models.CharField(max_length = 100)
     lyrics = models.TextField()
-    lines = models.IntegerField(blank = True)
+    lines = models.IntegerField(blank = True,
+                                null = True)
 
     def __str__(self):
         return "%s" % (self.name)
 
     @classmethod
-    def create(cls,name,lyrics):
-        song = cls(name,lyrics)
-        song.lines = len(song.lyric_list())
+    def create(cls,n,l):
+        song = cls(name=n,lyrics=l)
+        song.lines = int(len(song.lyric_list()))
         song.save()
         return song
 
