@@ -13,7 +13,8 @@ class Song(models.Model):
 
     @classmethod
     def create(cls,n,l):
-        song = cls(name=n,lyrics=l)
+        song = cls(name=n,
+                   lyrics=l)
         song.lines = int(len(song.lyric_list()))
         song.save()
         return song
@@ -102,11 +103,25 @@ class Response(models.Model):
 class Player(models.Model):
     user_id = models.IntegerField()
     name = models.CharField(max_length = 200)
-    username = models.CharField(max_length = 200,
-                            blank = True)
+    username = models.CharField(max_length = 200)
 
     def __str__(self):
         return "%s" % (self.name)
+
+    @classmethod
+    def is_player(cls, user):
+        for player in Player.objects.all():
+            if user['id'] == player.user_id:
+                return player
+
+        try:
+            player = cls(user_id = user['id'],
+                         name = user['first_name'],
+                         username = '@'+user['username'])
+            player.save()
+            return player
+        except KeyError:
+            return None
 
 def regex_line(string):
     import re
