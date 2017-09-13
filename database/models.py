@@ -18,8 +18,21 @@ class Song(models.Model):
         song.save()
         return song
 
+    @classmethod
+    def is_song(cls, chat_text):
+        songs = cls.objects.all()
+        text = regex_line(chat_text)
+
+        for song in songs:
+            for line in song.lyric_list():
+                l = regex_line(line)
+                if l in text:
+                    return song
+
+        return None
+
     def lyric_list(self):
-        clean = [line for line in self.lyrics.splitlines() if line != ""]
+        clean = [line.strip() for line in self.lyrics.splitlines() if line.strip() != ""]
         return clean
 
 
@@ -49,16 +62,16 @@ class Tracker(models.Model):
 
     def next_line(self, chat_text):
         text = regex_line(chat_text)
-        lyriclist = [regex_line(line) for line in self.song.lyric_list()]
+        lyriclist = self.song.lyric_list()
 
-        if self.line_number < self.song.lines and lyriclist[self.line_number-1] in text:
+        if self.line_number < self.song.lines and regex_line(lyriclist[self.line_number-1]) in text:
             lyric = lyriclist[self.line_number]
             self.line_number += 2
             self.save()
             return lyric
 
         for i in range(len(lyriclist)):
-            if lyriclist[i] in text and i+1 < self.song.lines:
+            if regex_line(lyriclist[i]) in text and i+1 < self.song.lines:
                 self.line_number = i+3
                 self.save()
                 return lyriclist[i+1]
@@ -74,12 +87,14 @@ class Response(models.Model):
         return "Trigger: %s \nResponse: %s" % (self.trigger,
                                                self.response)
 
-    def is_meme(self, chat_text):
+    @classmethod
+    def is_meme(cls, chat_text):
+        memes = cls.objects.all()
         text = regex_line(chat_text)
-        trig = regex_line(trigger)
 
-        if trig in text:
-            return response
+        for meme in memes:
+            if regex_line(meme.trigger) in text:
+                return meme.response
 
         return None
 
@@ -92,7 +107,6 @@ class Player(models.Model):
 
     def __str__(self):
         return "%s" % (self.name)
-
 
 def regex_line(string):
     import re
