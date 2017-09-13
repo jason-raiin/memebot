@@ -54,11 +54,13 @@ class Tracker(models.Model):
         if self.line_number < self.song.lines and lyriclist[self.line_number-1] in text:
             lyric = lyriclist[self.line_number]
             self.line_number += 2
+            self.save()
             return lyric
 
         for i in range(len(lyriclist)):
-            if lyriclist[i] in text:
-                self.line_number = i+1
+            if lyriclist[i] in text and i+1 < self.song.lines:
+                self.line_number = i+3
+                self.save()
                 return lyriclist[i+1]
 
         return None
@@ -93,5 +95,7 @@ class Player(models.Model):
 
 
 def regex_line(string):
+    import re
+
     re_string = re.sub('[^A-z\s]', '', string.lower())
     return re_string
