@@ -20,7 +20,7 @@ class Song(models.Model):
         return song
 
     @classmethod
-    def is_song(cls, chat_text):
+    def get_song(cls, chat_text):
         songs = cls.objects.all()
         text = regex_line(chat_text)
 
@@ -47,6 +47,30 @@ class Chat(models.Model):
 
     def __str__(self):
         return "%s" % (self.name)
+
+    @classmethod
+    def get_chat(cls,chat):
+        try:
+            chat = cls.objects.get(chat_id = chat.id)
+            player.update(name = get_chat_name(chat))
+
+            return player
+
+        except cls.DoesNotExist:
+            chat = cls.objects.create(chat_id = chat.id,
+                                      name = get_chat_name(chat))
+
+            return chat
+
+    @staticmethod
+    def get_chat_name(chat):
+        try:
+            return chat.title
+        except KeyError:
+            try:
+                return chat.first_name + chat.last_name
+            except KeyError:
+                return chat.first_name
 
 
 class Tracker(models.Model):
@@ -79,6 +103,15 @@ class Tracker(models.Model):
 
         return None
 
+    @classmethod
+    def find_tracker(cls,chat,song):
+        tracker = Tracker.objects.get_or_create(
+            chat = chat,
+            song = song
+        )
+
+        return tracker
+
 
 class Response(models.Model):
     trigger = models.CharField(max_length = 100)
@@ -89,7 +122,7 @@ class Response(models.Model):
                                                self.response)
 
     @classmethod
-    def is_meme(cls, chat_text):
+    def get_meme(cls, chat_text):
         memes = cls.objects.all()
         text = regex_line(chat_text)
 
@@ -109,22 +142,24 @@ class Player(models.Model):
         return "%s" % (self.name)
 
     @classmethod
-    def is_player(cls, user):
-        for player in Player.objects.all():
-            if user['id'] == player.user_id:
-                return player
-
+    def get_player(cls, user):
         try:
-            player = cls(user_id = user['id'],
-                         name = user['first_name'],
-                         username = '@'+user['username'])
-            player.save()
+            player = cls.objects.get(user_id = user.id)
+            player.update(name = user.first_name,
+                          username = user.username)
+
             return player
-        except KeyError:
-            return None
+
+        except cls.DoesNotExist:
+            player = cls.objects.create(user_id = user.id,
+                                        name = user.first_name,
+                                        username = user.username)
+
+            return player
+
 
 def regex_line(string):
     import re
-
     re_string = re.sub('[^A-z\s]', '', string.lower())
+
     return re_string
